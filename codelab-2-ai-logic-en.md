@@ -63,7 +63,13 @@ Our **AI Agent usage pattern** will be as follows:
 2. Replace the existing firebaseConfig in `firebase.tsx (app/src/lib/firebase.tsx)` with the configuration you just copied from the Firebase console.
 
 ```javascript
-const firebaseConfig = {  apiKey: "API_KEY",  authDomain: "PROJECT_ID.firebaseapp.com",  projectId: "PROJECT_ID",  storageBucket: "PROJECT_ID.firebasestorage.app",  messagingSenderId: "SENDER_ID",  appId: "APP_ID"
+const firebaseConfig = {
+  apiKey: "API_KEY",
+  authDomain: "PROJECT_ID.firebaseapp.com",
+  projectId: "PROJECT_ID",
+  storageBucket: "PROJECT_ID.firebasestorage.app",
+  messagingSenderId: "SENDER_ID",
+  appId: "APP_ID"
 };
 ```
 
@@ -94,8 +100,7 @@ In `firebase.tsx (app/src/lib/firebase.tsx)`, uncomment the following line of co
 const ai = getAI(firebaseApp);
 ```
 
-This will initialize the Firebase AI Logic service using getAI. This passes your current  
-firebaseApp configuration (which holds your API keys and project ID) to the AI SDK, creating the bridge between your app and Google's servers.
+This will initialize the Firebase AI Logic service using getAI. This passes your current firebaseApp configuration (which holds your API keys and project ID) to the AI SDK, creating the bridge between your app and Google's servers.
 
 ### **2\. Define the Model Configuration**
 
@@ -119,7 +124,7 @@ Inside `getSearchEnabledModel`, we call `getGenerativeModel`. This is where the 
 **The Tools (`tools`):**
 
 ```javascript
-tools: [{ googleSearch: {} }]
+tools: [{ googleSearch: {} }]
 ```
 
 This is the critical addition. By passing the `googleSearch` tool in the `tools` array, you are enabling **Grounding**.
@@ -141,7 +146,7 @@ In `App.tsx (app/src/App.tsx)`, uncomment the following two lines to add the Fin
 
 ```javascript
 import FindTheatresPage from "./pages/FindTheatres";
-//...<Route path="/findtheatres" element={<FindTheatresPage />} />
+//...<Route path="/findtheatres" element={<FindTheatresPage />} />
 ```
 
 Let’s breakdown some of the key logic within the FindTheatres.tsx component:
@@ -156,8 +161,6 @@ We use standard React hooks to manage the user's input.
 ### **2\. The Prompt Engineering Strategy**
 
 The core of this component is the `handleSearch` function. Look closely at how we construct the `prompt`:
-
-JavaScript
 
 ```json
 Context: User wants to see the movie matching "${tags || movieTitle}" in a theatre.
@@ -211,10 +214,8 @@ Inside handleSearch, we execute the call:
 1. **Call the Model:** `model.generateContent(...)` triggers the AI. The AI sees the request for "current showtimes," recognizes it needs external data, performs a Google Search, and synthesizes the results.
 
 2. **Clean and Parse:**  
-   JavaScript
-
 ````javascript
-const cleanJson = text.replace(/```json|```/g, "").trim();
+const cleanJson = text.replace(/```json|```/g, "").trim();
 const data = JSON.parse(cleanJson);
 ````
 
@@ -227,7 +228,7 @@ const data = JSON.parse(cleanJson);
 The return statement handles the visual presentation using Tailwind CSS.
 
 * **Input Section:** A split layout allowing users to change the date or location easily.  
-* **Results Loop:** We map through the `movies` array. Notice how we handle `isTargetMovie`. If the AI found the exact movie the user wanted, we highlight it. If that movie isn't playing nearby, the AI (per our prompt) returns "similar" recommendations, which we label clearly.
+* **Results Loop:** We map through the `movies` array.
 
 ## **6\. See it in action**
 
