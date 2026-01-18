@@ -1,0 +1,608 @@
+diff --git a/app/package.json b/app/package.json
+index 00e022c..f427623 100644
+--- a/app/package.json
++++ b/app/package.json
+@@ -11,26 +11,46 @@
+   },
+   "dependencies": {
+     "@movie/dataconnect": "file:src/lib/dataconnect-sdk",
+-    "dotenv": "^16.4.5",
+-    "firebase": "^10.12.4-dataconnect-preview.d986d4bf2",
+-    "react": "^18.3.1",
+-    "react-dom": "^18.3.1",
+-    "react-icons": "^5.2.1",
+-    "react-router-dom": "^6.25.1"
++    "@radix-ui/react-avatar": "^1.1.11",
++    "@radix-ui/react-checkbox": "^1.3.3",
++    "@radix-ui/react-dialog": "^1.1.15",
++    "@radix-ui/react-label": "^2.1.8",
++    "@radix-ui/react-popover": "^1.1.15",
++    "@radix-ui/react-radio-group": "^1.3.8",
++    "@radix-ui/react-separator": "^1.1.8",
++    "@radix-ui/react-slot": "^1.2.4",
++    "class-variance-authority": "^0.7.1",
++    "clsx": "^2.1.1",
++    "date-fns": "^4.1.0",
++    "dotenv": "^17.2.3",
++    "embla-carousel-react": "^8.6.0",
++    "firebase": "^12.8.0",
++    "framer-motion": "^12.26.2",
++    "lucide-react": "^0.562.0",
++    "next-themes": "^0.4.6",
++    "react": "^19.2.3",
++    "react-day-picker": "^9.13.0",
++    "react-dom": "^19.2.3",
++    "react-icons": "^5.5.0",
++    "react-router-dom": "^7.12.0",
++    "sonner": "^2.0.7",
++    "tailwind-merge": "^3.4.0",
++    "tailwindcss-animate": "^1.0.7"
+   },
+   "devDependencies": {
+-    "@types/react": "^18.2.43",
+-    "@types/react-dom": "^18.2.17",
+-    "@typescript-eslint/eslint-plugin": "^7.18.0",
+-    "@typescript-eslint/parser": "^7.18.0",
+-    "@vitejs/plugin-react": "^4.2.1",
+-    "autoprefixer": "^10.4.19",
+-    "eslint": "^8.55.0",
+-    "eslint-plugin-react-hooks": "^4.6.2",
+-    "eslint-plugin-react-refresh": "^0.4.5",
+-    "postcss": "^8.4.40",
+-    "tailwindcss": "^3.4.7",
+-    "typescript": "^5.2.2",
+-    "vite": "^5.0.8"
++    "@tailwindcss/postcss": "^4.1.18",
++    "@types/react": "^19.2.8",
++    "@types/react-dom": "^19.2.3",
++    "@typescript-eslint/eslint-plugin": "^8.53.0",
++    "@typescript-eslint/parser": "^8.53.0",
++    "@vitejs/plugin-react": "^5.1.2",
++    "autoprefixer": "^10.4.23",
++    "eslint": "^9.39.2",
++    "eslint-plugin-react-hooks": "^7.0.1",
++    "eslint-plugin-react-refresh": "^0.4.26",
++    "postcss": "^8.5.6",
++    "tailwindcss": "^4.1.18",
++    "typescript": "^5.9.3",
++    "vite": "^7.3.1"
+   }
+ }
+diff --git a/app/postcss.config.js b/app/postcss.config.js
+index f60c3ff..6c0484f 100644
+--- a/app/postcss.config.js
++++ b/app/postcss.config.js
+@@ -16,7 +16,7 @@
+ 
+ export default {
+   plugins: {
+-    tailwindcss: {},
++    '@tailwindcss/postcss': {},
+     autoprefixer: {},
+   },
+ }
+diff --git a/app/src/App.tsx b/app/src/App.tsx
+index e31f29c..572c360 100644
+--- a/app/src/App.tsx
++++ b/app/src/App.tsx
+@@ -22,6 +22,7 @@ import MoviePage from "./pages/Movie";
+ import MyProfilePage from "./pages/MyProfile";
+ import VectorSearchPage from "./pages/VectorSearch";
+ import AdvancedSearchPage from "./pages/AdvancedSearch";
++// import FindTheatresPage from "./pages/FindTheatres";
+ import NotFound from "./pages/NotFound";
+ import RootLayout from "./layout/RootLayout";
+ 
+@@ -36,6 +37,7 @@ export default function App() {
+           <Route path="/myprofile" element={<MyProfilePage />} />
+           <Route path="/vectorsearch" element={<VectorSearchPage />} />
+           <Route path="/advancedsearch" element={<AdvancedSearchPage />} />
++          {/* <Route path="/findtheatres" element={<FindTheatresPage />} /> */}
+           <Route path="*" element={<NotFound />} />
+         </Routes>
+       </RootLayout>
+diff --git a/app/src/index.css b/app/src/index.css
+index 7d6e546..1b3f4cc 100644
+--- a/app/src/index.css
++++ b/app/src/index.css
+@@ -13,7 +13,5 @@
+  * See the License for the specific language governing permissions and
+  * limitations under the License.
+  */
+- 
+-@tailwind base;
+-@tailwind components;
+-@tailwind utilities;
++
++@import "tailwindcss";
+diff --git a/app/src/lib/firebase.tsx b/app/src/lib/firebase.tsx
+index f928c2d..f13743b 100644
+--- a/app/src/lib/firebase.tsx
++++ b/app/src/lib/firebase.tsx
+@@ -21,6 +21,7 @@ import {
+   getDataConnect,
+ } from "firebase/data-connect";
+ import { connectorConfig } from '@movie/dataconnect';
++// import { getAI, getGenerativeModel, GoogleAIBackend } from "firebase/ai";
+ import { createContext } from "react";
+ 
+ const firebaseConfig = {
+@@ -31,10 +32,19 @@ const firebaseConfig = {
+   messagingSenderId: "SENDER_ID",
+   appId: "APP_ID"
+ };
+-
+ const firebaseApp =
+   getApps().length === 0 ? initializeApp(firebaseConfig) : getApps()[0];
+ 
++// const ai = getAI(firebaseApp);
++
++// export const getSearchEnabledModel = () => {
++//   return getGenerativeModel(ai, {
++//     model: "gemini-3-flash-preview", 
++//     tools: [{ googleSearch: {} }]
++//   });
++// };
++
++
+ const auth = getAuth(firebaseApp);
+ const dataconnect = getDataConnect(firebaseApp, connectorConfig);
+ 
+diff --git a/app/src/pages/FindTheatres.tsx b/app/src/pages/FindTheatres.tsx
+new file mode 100644
+index 0000000..b61fdb5
+--- /dev/null
++++ b/app/src/pages/FindTheatres.tsx
+@@ -0,0 +1,303 @@
++import React, { useState, useRef, useEffect } from "react";
++import { useSearchParams } from "react-router-dom";
++import { getSearchEnabledModel } from "../lib/firebase"; 
++import { Loader2, MapPin, Calendar, Film, Ticket } from "lucide-react";
++
++interface Theatre {
++  name: string;
++  showtimes: string[];
++}
++
++interface MovieResult {
++  title: string;
++  isTargetMovie: boolean;
++  description: string;
++  theatres: Theatre[];
++}
++
++const ShadowDomWrapper = ({ content, className }: { content: string; className?: string }) => {
++  const hostRef = useRef<HTMLDivElement>(null);
++  const shadowRootRef = useRef<ShadowRoot | null>(null);
++
++  useEffect(() => {
++    if (hostRef.current && !shadowRootRef.current) {
++      shadowRootRef.current = hostRef.current.attachShadow({ mode: "open" });
++    }
++    if (shadowRootRef.current && shadowRootRef.current.innerHTML !== content) {
++      shadowRootRef.current.innerHTML = content;
++      
++      // Inject dark mode styles into shadow DOM for Google Search content
++      const style = document.createElement('style');
++      style.textContent = `
++        * { color: #e5e7eb !important; } 
++        a { color: #60a5fa !important; }
++      `;
++      shadowRootRef.current.appendChild(style);
++    }
++  }, [content]);
++
++  return <div ref={hostRef} className={className} />;
++};
++
++export default function FindTheatresPage() {
++  const [searchParams] = useSearchParams();
++  const movieTitle = searchParams.get("title") || "";
++  const tags = searchParams.getAll("tags").join(", ") || "";
++
++  const [location, setLocation] = useState("");
++  const [date, setDate] = useState(new Date().toISOString().split("T")[0]);
++  const [isLoading, setIsLoading] = useState(false);
++  const [movies, setMovies] = useState<MovieResult[]>([]);
++  const [groundingMetadata, setGroundingMetadata] = useState<any>(null);
++  const [error, setError] = useState("");
++
++  const handleUseMyLocation = () => {
++    if ("geolocation" in navigator) {
++      setIsLoading(true);
++      navigator.geolocation.getCurrentPosition(
++        (position) => {
++          setLocation(`${position.coords.latitude}, ${position.coords.longitude}`);
++          setIsLoading(false);
++        },
++        (err) => {
++          console.error(err);
++          setIsLoading(false);
++        }
++      );
++    }
++  };
++
++  const handleSearch = async (e: React.FormEvent) => {
++    e.preventDefault();
++    if (!location || !date) return;
++    setIsLoading(true);
++    setMovies([]);
++    setError("");
++    setGroundingMetadata(null);
++
++    try {
++      const model = getSearchEnabledModel();
++
++      const prompt = `
++            Context: User wants to see the movie matching "${tags || movieTitle}" in a theatre.
++            Location: ${location}
++            Date: ${date}
++
++            Task:
++            1. Find 2-3 movies similar to "${tags || movieTitle}" currently playing in this city.
++            2. Return strict JSON format.
++
++            JSON Schema:
++            {
++                "movies": [
++                    {
++                        "title": "Movie Title",
++                        "description": "Movie description",
++                        "isTargetMovie": true,
++                        "theatres": [
++                            { "name": "Cinema Name", "showtimes": ["7:00 PM", "9:30 PM"] }
++                        ]
++                    }
++                ]
++            }
++        `;
++
++      const result = await model.generateContent({
++        contents: [{ role: "user", parts: [{ text: prompt }] }],
++      });
++
++      const response = result.response;
++      const text = response.text();
++
++      setGroundingMetadata(response.candidates?.[0]?.groundingMetadata);
++
++      const cleanJson = text.replace(/```json|```/g, "").trim();
++      const data = JSON.parse(cleanJson);
++
++      if (data.movies && Array.isArray(data.movies)) {
++        setMovies(data.movies);
++      } else {
++        throw new Error("Invalid response format");
++      }
++    } catch (err) {
++      console.error("Search Error:", err);
++      setError("Could not find showtimes. Please try again.");
++    } finally {
++      setIsLoading(false);
++    }
++  };
++
++  return (
++    <div className="min-h-screen bg-gray-900 text-white font-sans">
++      <div className="max-w-4xl mx-auto py-8 px-4">
++        {/* Header */}
++        <div className="flex items-center space-x-4 mb-8">
++          <div className="p-3 bg-blue-900/30 rounded-full border border-blue-800">
++            <Ticket className="w-6 h-6 text-blue-400" />
++          </div>
++          <div>
++            <h1 className="text-3xl font-bold text-white">Box Office Search</h1>
++            <p className="text-gray-400">
++              Find <span className="font-semibold text-white">{movieTitle || "movies"}</span> or similar films near you.
++            </p>
++          </div>
++        </div>
++
++        <div className="grid gap-8 lg:grid-cols-[350px_1fr]">
++          {/* Left Column: Search Form */}
++          <div className="h-fit space-y-6">
++            <div className="rounded-xl border border-gray-700 bg-gray-800 shadow-lg">
++              <div className="p-6 pt-6">
++                <form onSubmit={handleSearch} className="space-y-4">
++                  <div className="space-y-2">
++                    <label className="text-sm font-medium text-gray-300">
++                      Date
++                    </label>
++                    <div className="relative">
++                      <Calendar className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
++                      <input
++                        type="date"
++                        value={date}
++                        onChange={(e) => setDate(e.target.value)}
++                        className="flex h-10 w-full rounded-md border border-gray-600 bg-gray-700 px-3 py-2 pl-9 text-sm text-white focus:outline-none focus:ring-2 focus:ring-blue-500 placeholder-gray-400"
++                        required
++                      />
++                    </div>
++                  </div>
++
++                  <div className="space-y-2">
++                    <label className="text-sm font-medium text-gray-300">
++                      Location
++                    </label>
++                    <div className="flex gap-2">
++                      <div className="relative flex-1">
++                        <MapPin className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
++                        <input
++                          placeholder="City, Zip, or Address"
++                          value={location}
++                          onChange={(e) => setLocation(e.target.value)}
++                          className="flex h-10 w-full rounded-md border border-gray-600 bg-gray-700 px-3 py-2 pl-9 text-sm text-white focus:outline-none focus:ring-2 focus:ring-blue-500 placeholder-gray-400"
++                          required
++                        />
++                      </div>
++                      <button
++                        type="button"
++                        onClick={handleUseMyLocation}
++                        title="Use my location"
++                        className="inline-flex items-center justify-center rounded-md border border-gray-600 bg-gray-700 text-gray-200 hover:bg-gray-600 h-10 w-10 transition-colors"
++                      >
++                        <MapPin className="h-4 w-4" />
++                      </button>
++                    </div>
++                  </div>
++
++                  <button
++                    type="submit"
++                    disabled={isLoading}
++                    className="inline-flex items-center justify-center w-full rounded-md bg-blue-600 text-white font-medium hover:bg-blue-700 h-10 px-4 py-2 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
++                  >
++                    {isLoading ? (
++                      <>
++                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
++                        Scanning...
++                      </>
++                    ) : (
++                      "Find Showtimes"
++                    )}
++                  </button>
++                </form>
++              </div>
++            </div>
++          </div>
++
++          {/* Right Column: Results */}
++          <div className="space-y-6">
++            {isLoading && (
++              <div className="flex flex-col items-center justify-center py-20 space-y-4">
++                <Loader2 className="h-10 w-10 animate-spin text-blue-500" />
++                <p className="text-lg font-medium animate-pulse text-gray-400">
++                  Scanning theatres in {location || 'your area'}...
++                </p>
++              </div>
++            )}
++
++            {!isLoading && movies.length === 0 && !error && (
++              <div className="flex flex-col items-center justify-center h-64 border-2 border-dashed border-gray-700 rounded-xl text-gray-500 bg-gray-800/50">
++                <Film className="h-12 w-12 mb-4 opacity-20" />
++                <p>Enter a location to see what's playing.</p>
++              </div>
++            )}
++
++            {error && (
++              <div className="p-4 rounded-lg bg-red-900/20 border border-red-900 text-red-400 text-center">
++                {error}
++              </div>
++            )}
++
++            {movies.map((movie, idx) => (
++              <div
++                key={idx}
++                className="rounded-xl border border-gray-700 bg-gray-800 text-white shadow-lg overflow-hidden hover:border-blue-500/50 transition-colors"
++              >
++                <div className="p-6">
++                  <div>
++                    <div className="flex items-start justify-between mb-2">
++                      <h3 className="text-2xl font-bold flex items-center gap-2">
++                        <Film className="h-5 w-5 text-blue-500" />
++                        {movie.title}
++                      </h3>
++                      {movie.isTargetMovie ? (
++                        <span className="inline-flex items-center rounded-full border border-blue-500/30 bg-blue-500/10 px-2.5 py-0.5 text-xs font-semibold text-blue-400">
++                          Selected Movie
++                        </span>
++                      ) : (
++                        <span className="inline-flex items-center rounded-full border border-gray-600 bg-gray-700 px-2.5 py-0.5 text-xs font-semibold text-gray-300">
++                          Recommendation
++                        </span>
++                      )}
++                    </div>
++                    {movie.description && (
++                      <p className="text-gray-400 mb-4 text-sm leading-relaxed">
++                        {movie.description}
++                      </p>
++                    )}
++                  </div>
++
++                  <div className="space-y-4 mt-4">
++                    {movie.theatres && movie.theatres.length > 0 ? (
++                      movie.theatres.map((theatre, tIdx) => (
++                        <div
++                          key={tIdx}
++                          className="bg-gray-700/50 p-4 rounded-lg border border-gray-700"
++                        >
++                          <div className="font-semibold mb-3 flex items-center text-blue-400">
++                            <MapPin className="w-4 h-4 mr-2" />
++                            {theatre.name}
++                          </div>
++                          <div className="flex flex-wrap gap-2">
++                            {theatre.showtimes.map((time, timeIdx) => (
++                              <span
++                                key={timeIdx}
++                                className="inline-flex items-center rounded-md border border-gray-600 bg-gray-800 px-3 py-1 text-sm font-medium text-gray-200 hover:bg-blue-600 hover:border-blue-600 hover:text-white cursor-pointer transition-colors"
++                              >
++                                {time}
++                              </span>
++                            ))}
++                          </div>
++                        </div>
++                      ))
++                    ) : (
++                      <p className="text-sm text-gray-500 italic pl-1">
++                        No showtimes found nearby for this date.
++                      </p>
++                    )}
++                  </div>
++                </div>
++              </div>
++            ))}
++          </div>
++        </div>
++      </div>
++    </div>
++  );
++}
+\ No newline at end of file
+diff --git a/app/src/pages/Movie.tsx b/app/src/pages/Movie.tsx
+index bb4ca88..7aa2538 100644
+--- a/app/src/pages/Movie.tsx
++++ b/app/src/pages/Movie.tsx
+@@ -13,10 +13,14 @@
+  * See the License for the specific language governing permissions and
+  * limitations under the License.
+  */
+-
+ import { useContext, useEffect, useState } from "react";
+-import { useParams, Link } from "react-router-dom";
+-import { MdFavorite, MdFavoriteBorder, MdStar } from "react-icons/md";
++import { useParams, Link, useNavigate } from "react-router-dom"; // Added useNavigate
++import { 
++  MdFavorite, 
++  MdFavoriteBorder, 
++  MdStar, 
++  MdConfirmationNumber
++} from "react-icons/md";
+ import { onAuthStateChanged, User } from "firebase/auth";
+ import { AuthContext } from "@/lib/firebase";
+ import NotFound from "./NotFound";
+@@ -32,6 +36,7 @@ import MovieCard from "@/components/moviecard";
+ 
+ export default function MoviePage() {
+   const { id } = useParams() as { id: string };
++  const navigate = useNavigate(); // Initialize hook
+   const auth = useContext(AuthContext);
+ 
+   const [loading, setLoading] = useState(true);
+@@ -40,9 +45,9 @@ export default function MoviePage() {
+   const [reviewText, setReviewText] = useState("");
+   const [rating, setRating] = useState(0);
+ 
+-  const [movie, setMovie] = useState(null);
+-  const [userReview, setUserReview] = useState(null);
+-  const [similarMovies, setSimilarMovies] = useState([]);
++  const [movie, setMovie] = useState<any>(null); 
++  const [userReview, setUserReview] = useState<any>(null);
++  const [similarMovies, setSimilarMovies] = useState<any[]>([]);
+ 
+   // Fetch the movie details and check if it's favorited when the user is authenticated
+   useEffect(() => {
+@@ -63,7 +68,7 @@ export default function MoviePage() {
+         setMovie(movieData);
+         if (movieData?.reviews) {
+           const userReview = movieData.reviews.find(
+-            (review) => review.user.id === authUser?.uid
++            (review: any) => review.user.id === authUser?.uid
+           );
+           setUserReview(userReview || null);
+         }
+@@ -90,6 +95,20 @@ export default function MoviePage() {
+     }
+   };
+ 
++  // Handle navigation to the Find Theatres page
++  const handleFindTheatres = () => {
++    if (!movie) return;
++    
++    const params = new URLSearchParams();
++    params.set("title", movie.title);
++    
++    if (movie.tags && Array.isArray(movie.tags)) {
++      movie.tags.forEach((tag: string) => params.append("tags", tag));
++    }
++
++    navigate(`/findtheatres?${params.toString()}`);
++  };
++
+   // Submit a new review
+   const handleReviewSubmit = async (e: React.FormEvent) => {
+     e.preventDefault();
+@@ -158,16 +177,28 @@ export default function MoviePage() {
+               <span className="font-bold">Tags:</span> {movie.tags?.join(", ")}
+             </p>
+           </div>
+-          <div className="mt-4 flex space-x-4">
++
++          {/* Action Buttons */}
++          <div className="mt-6 flex flex-wrap items-center gap-4">
++             {/* Find Theatres Button */}
++             <button
++              onClick={handleFindTheatres}
++              className="flex items-center gap-2 px-6 py-2 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-lg transition-colors duration-200 shadow-lg"
++            >
++              <MdConfirmationNumber size={20} />
++              Find Theatres
++            </button>
++
++            {/* Favorite Button */}
+             <button
+-              className="flex items-center justify-center p-1 text-red-500 hover:text-red-600 transition-colors duration-200"
++              className="flex items-center justify-center p-2 text-red-500 hover:bg-gray-800 rounded-full transition-colors duration-200"
+               aria-label="Favorite"
+               onClick={handleFavoriteToggle}
+             >
+               {isFavorited ? (
+-                <MdFavorite size={24} />
++                <MdFavorite size={32} />
+               ) : (
+-                <MdFavoriteBorder size={24} />
++                <MdFavoriteBorder size={32} />
+               )}
+             </button>
+           </div>
+@@ -177,7 +208,7 @@ export default function MoviePage() {
+       <div className="mt-8">
+         <h2 className="text-2xl font-bold mb-2">Main Actors</h2>
+         <div className="flex overflow-x-auto space-x-4">
+-          {movie.mainActors.map((actor) => (
++          {movie.mainActors.map((actor: any) => (
+             <Link key={actor.id} to={`/actor/${actor.id}`}>
+               <div className="flex-shrink-0 bg-gray-800 rounded-lg overflow-hidden shadow-md hover:shadow-lg transition-shadow duration-200 cursor-pointer w-32">
+                 <img
+@@ -197,7 +228,7 @@ export default function MoviePage() {
+       <div className="mt-8">
+         <h2 className="text-2xl font-bold mb-2">Supporting Actors</h2>
+         <div className="flex overflow-x-auto space-x-4">
+-          {movie.supportingActors.map((actor) => (
++          {movie.supportingActors.map((actor: any) => (
+             <Link key={actor.id} to={`/actor/${actor.id}`}>
+               <div className="flex-shrink-0 bg-gray-800 rounded-lg overflow-hidden shadow-md hover:shadow-lg transition-shadow duration-200 cursor-pointer w-32">
+                 <img
+@@ -248,7 +279,7 @@ export default function MoviePage() {
+           </form>
+         ) : null}
+ 
+-        {movie.reviews.map((review) => (
++        {movie.reviews.map((review: any) => (
+           <div
+             key={review.id}
+             className="mb-4 p-4 bg-gray-800 rounded-lg shadow-md"
+@@ -276,6 +307,7 @@ export default function MoviePage() {
+             <div className="grid grid-cols-4 gap-2">
+               {similarMovies.map((similarMovie) => (
+                 <MovieCard
++                  key={similarMovie.id}
+                   id={similarMovie.id}
+                   title={similarMovie.title || "TBA"}
+                   imageUrl={similarMovie.imageUrl}
+@@ -290,4 +322,4 @@ export default function MoviePage() {
+       </div>
+     </div>
+   );
+-}
++}
+\ No newline at end of file
