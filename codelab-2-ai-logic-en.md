@@ -40,6 +40,8 @@ Our **AI Agent usage pattern** will be as follows:
 
    `curl -L https://github.com/FirebaseExtended/codelab-dataconnect-web/compare/main...ailogic.diff | git apply`
 
+   Note there may be some error patching the `firebase.tsx` file, but that is okay.
+
 2. Stop running the Vite server (CTRL+C to kill the process).  
 3. Rerun `npm i` from the app/ directory  
 4. Restart the Vite server by running `npm run dev` in the terminal window  
