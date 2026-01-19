@@ -189,7 +189,7 @@ const data = JSON.parse(cleanJson);
 
 4. **Grounding Metadata:** We specifically save `response.candidates?.[0]?.groundingMetadata`. This contains the "proof"—the links to the actual cinema websites where the data was found.
 
-#### **4\. The UI Rendering**
+### **4\. The UI Rendering**
 
 The return statement handles the visual presentation using Tailwind CSS.
 
