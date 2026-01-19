@@ -53,37 +53,16 @@ Our **AI Agent usage pattern** will be as follows:
 3. Click on the API Keys and ensure that Firebase AI Logic API and Vertex AI API are both selected  
 4. Click on Save
 
-### **3\. Add your Firebase project configuration to your local app dev environment**
-
-1. Navigate to the [Firebase console](https://console.firebase.google.com/):  
-   1. Open your project, and then click Add App.  
-   2. Ignore the SDK setup and configuration setup for now, but make sure to copy the generated firebaseConfig object.
-
-      ![][image1]  
-2. Replace the existing firebaseConfig in `firebase.tsx (app/src/lib/firebase.tsx)` with the configuration you just copied from the Firebase console.
-
-```javascript
-const firebaseConfig = {
-  apiKey: "API_KEY",
-  authDomain: "PROJECT_ID.firebaseapp.com",
-  projectId: "PROJECT_ID",
-  storageBucket: "PROJECT_ID.firebasestorage.app",
-  messagingSenderId: "SENDER_ID",
-  appId: "APP_ID"
-};
-```
-
 ## **3\. Set up Firebase AI Logic**
 
 To access Gemini models directly from your client application, we use the Firebase AI Logic SDK.
 
 ### **1\. Enable Firebase AI Logic SDK**
 
-1. In `firebase.tsx (app/src/lib/firebase.tsx)`, **uncomment** the import statement at the top
+1. In `firebase.tsx (app/src/lib/firebase.tsx)`, **add* the following import statement at the top of your `firebase.tsx` file:
 
 ```javascript
 import { getAI, getGenerativeModel, GoogleAIBackend } from "firebase/ai";
-
 ```
 
 ## **4\. Configure the Search-Enabled Model**
@@ -94,7 +73,7 @@ In this step, we are going to define the specific configuration for our AI model
 
 ### **1\. Initialize the service**
 
-In `firebase.tsx (app/src/lib/firebase.tsx)`, uncomment the following line of code:
+In `firebase.tsx (app/src/lib/firebase.tsx)`, add the following line of code:
 
 ```javascript
 const ai = getAI(firebaseApp);
@@ -104,7 +83,7 @@ This will initialize the Firebase AI Logic service using getAI. This passes your
 
 ### **2\. Define the Model Configuration**
 
-In `firebase.tsx (app/src/lib/firebase.tsx)`, uncomment the following lines of code:
+In `firebase.tsx (app/src/lib/firebase.tsx)`, add the following lines of code:
 
 ```javascript
 const ai = getAI(firebaseApp);
