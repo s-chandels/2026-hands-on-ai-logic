@@ -32,43 +32,12 @@
 * **AI Logic サービス:** Google 検索ツールを使用して Gemini にクエリを送信するクライアントサイド サービス。  
 * **構造化プロンプティング (Structured Prompting):** コード内で利用可能な JSON データを AI に強制的に返させるテクニック。
 
-## **2\. 開発環境とアプリ構成のセットアップ**
-
-### **1\. スターター コードのダウンロード**
-
-1. プロジェクトのルート ディレクトリで以下のコマンドを実行し、必要なアプリ ファイルと構成の更新をダウンロードします。
-
-   `curl -L https://github.com/FirebaseExtended/codelab-dataconnect-web/compare/main...ailogic.diff | git apply`  
-
-2. Vite サーバーが動作している場合は停止します（CTRL+C でプロセスを終了）。  
-3. `app/` ディレクトリで `npm i` を再実行します。  
-4. ターミナル ウィンドウで `npm run dev` を実行して、Vite サーバーを再起動します。  
-5. 映画をクリックして更新された映画詳細ページを確認すると、新しい **\[Find Theatres\]**（映画館を探す）ボタンが表示されているはずです。この機能をこれから実装していきます。
-
-### **2\. Cloud コンソールで Firebase AI Logic API と Vertex AI API を有効にする**
+## **2\. Cloud コンソールで Firebase AI Logic API と Vertex AI API を有効にする**
 
 1. Qwiklabs で生成されたプロジェクトを使用して、Cloud コンソールの認証情報ページにアクセスします: [https://console.cloud.google.com/apis/credentials](https://console.cloud.google.com/apis/credentials)  
 2. **Browser Key**（Firebase によって自動生成されたもの）に移動 \> 下にスクロールして \[API の制限\] セクションへ移動します。  
 3. \[API キー\] をクリックし、**Firebase AI Logic API** と **Vertex AI API** の両方が選択されていることを確認します。  
 4. \[保存\] をクリックします。
-
-### **3\. ローカル アプリ開発環境に Firebase プロジェクト構成を追加する**
-
-1. [Firebase コンソール](https://console.firebase.google.com/)に移動します:  
-   1. プロジェクトを開き、\[アプリを追加\] をクリックします。  
-   2. SDK の設定と構成のセットアップは今のところ無視して構いませんが、生成された `firebaseConfig` オブジェクトを必ずコピーしてください。  
-2. `firebase.tsx (app/src/lib/firebase.tsx)` 内の既存の `firebaseConfig` を、Firebase コンソールからコピーした構成に置き換えます。
-
-```javascript
-const firebaseConfig = {
-  apiKey: "API_KEY",
-  authDomain: "PROJECT_ID.firebaseapp.com",
-  projectId: "PROJECT_ID",
-  storageBucket: "PROJECT_ID.firebasestorage.app",
-  messagingSenderId: "SENDER_ID",
-  appId: "APP_ID"
-};
-```
 
 ## **3\. Firebase AI Logic のセットアップ**
 
@@ -211,14 +180,34 @@ interface MovieResult {
 
 2. **クリーニングと解析:**
 
-````javascript
+```javascript
 const cleanJson = text.replace(/```json|```/g, "").trim();
 const data = JSON.parse(cleanJson);
-````
+```
 
-3. `JSON.parse` がクラッシュしないように、AI が追加する可能性のあるマークダウン コードブロック（\`\`\`json など）を取り除きます。  
+3. 実行と解析
+プロンプト内の JSON スキーマに基づいてモデルのレスポンスをマッピングするために、以下の2つのインターフェースを用意しています：
 
-4. **グラウンディング メタデータ (Grounding Metadata):** `response.candidates?.[0]?.groundingMetadata` を具体的に保存します。これには「証拠」、つまりデータが見つかった実際の映画館ウェブサイトへのリンクが含まれています。
+```TypeScript
+interface Theatre {
+ name: string;
+ showtimes: string[];
+}
+
+interface MovieResult {
+ title: string;
+ isTargetMovie: boolean;
+ description: string;
+ theatres: Theatre[];
+}
+```
+handleSearch 内部で、以下の呼び出しを実行します：
+
+  1. **モデルの呼び出し**: model.generateContent(...) が AI をトリガーします。AI は「現在の上映時間」のリクエストを確認し、外部データが必要であることを認識して Google 検索を実行し、結果を合成します。
+  
+  2. **Clean and Parse**: `JSON.parse` がクラッシュしないように、AI が追加する可能性のあるマークダウン コードブロック（\`\`\`json など）を取り除きます。  
+  
+  3. **グラウンディング メタデータ (Grounding Metadata):** `response.candidates?.[0]?.groundingMetadata` を具体的に保存します。これには「証拠」、つまりデータが見つかった実際の映画館ウェブサイトへのリンクが含まれています。
 
 #### **4\. UI レンダリング**
 
@@ -227,7 +216,7 @@ return ステートメントでは、Tailwind CSS を使用して表示を処理
 * **入力セクション:** ユーザーが日付や場所を簡単に変更できる分割レイアウトです。  
 * **結果ループ:** `movies` 配列をマップして表示します。
 
-## **6\. 動作確認**
+## **4\. 動作確認**
 
 1. アプリケーションを起動します: `npm run dev`  
 2. 映画をクリックし、**\[Find Theatres\]** ボタンを押します。  
