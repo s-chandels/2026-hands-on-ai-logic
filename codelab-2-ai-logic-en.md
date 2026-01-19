@@ -157,7 +157,7 @@ Context: User wants to see the movie matching "${tags || movieTitle}" in a theat
 * **Context Injection:** We explicitly feed the `location` and `date` into the prompt so the Google Search tool knows exactly *where* and *when* to look.  
 * **Structured Output (JSON Mode):** LLMs typically output conversational text. However, our UI needs arrays and objects to render the list of theatres cleanly. By explicitly asking for a "strict JSON format" and providing a **JSON Schema**, we force the model to format its search findings into machine-readable code.
 
-#### **3\. Execution and Parsing**
+### **3\. Execution and Parsing**
 
 We have the following two interfaces to map to the model responses based on the JSON schema in the prompt:
 
