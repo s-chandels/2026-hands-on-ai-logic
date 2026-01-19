@@ -59,7 +59,7 @@ To access Gemini models directly from your client application, we use the Fireba
 
 ### **1\. Enable Firebase AI Logic SDK**
 
-1. In `firebase.tsx (app/src/lib/firebase.tsx)`, **add* the following import statement at the top of your `firebase.tsx` file:
+1. In `firebase.tsx (app/src/lib/firebase.tsx)`, **add** the following import statement at the top of your `firebase.tsx` file:
 
 ```javascript
 import { getAI, getGenerativeModel, GoogleAIBackend } from "firebase/ai";
