@@ -95,3 +95,157 @@
 
 ```javascript
 import { getAI, getGenerativeModel, GoogleAIBackend } from "firebase/ai";
+
+## **4. 検索対応モデルの構成**
+
+このステップでは、AIモデルの具体的な構成を定義します。ここでは単に標準的なテキストモデルをインスタンス化するだけではありません。**グラウンディング (Grounding)** を使用して、モデルに外部の世界へアクセスする能力を与えます。
+
+**目標:** リアルタイムの情報を取得するために Google 検索を実行できる Gemini モデルを返す関数を作成します。これは、検索ツールを使用してアプリにレスポンスを返すエージェントとして機能します。
+
+### **1. サービスの初期化**
+
+firebase.tsx (app/src/lib/firebase.tsx) に、以下のコード行を追加します。
+
+```javascript
+const ai = getAI(firebaseApp);
+```
+
+これにより、getAI を使用して Firebase AI Logic サービスが初期化されます。これは、（API キーとプロジェクト ID を保持する）現在の firebaseApp 構成を AI SDK に渡し、アプリと Google のサーバー間の架け橋を作成します。
+
+### **2. モデル構成の定義**
+
+firebase.tsx (app/src/lib/firebase.tsx) に、以下のコード行を追加します。
+
+```javascript
+const ai = getAI(firebaseApp);
+
+export const getSearchEnabledModel = () => {
+return getGenerativeModel(ai, {
+model: "gemini-3-flash-preview",
+tools: [{ googleSearch: {} }]
+});
+};
+```
+
+getSearchEnabledModel 内で、getGenerativeModel を呼び出します。ここが重要なポイントです。2つの異なる構成要素を渡します。
+
+**モデル (`model`):** `"gemini-3-flash-preview"` を選択しています。これは、使用したい大規模言語モデル (LLM) の特定のバージョンです。「Flash」モデルは速度と低レイテンシに最適化されており、ユーザー向けアプリケーションに優れています。
+
+**ツール (`tools`):**
+
+```javascript
+tools: [{ googleSearch: {} }]
+```
+
+これが重要な追加要素です。`tools` 配列に `googleSearch` ツールを渡すことで、**グラウンディング** を有効にします。
+
+* **これがない場合:** モデルは自身の学習データ（知識のカットオフ日があるもの）のみに依存します。
+* **これがある場合:** モデルは、ユーザーが現在の出来事や特定の事実（例：「現在の Alpha の株価は？」）について質問したことを認識し、回答を生成する前に自動的に Google 検索を使用して答えを見つけることができます。
+
+**重要なポイント:**
+
+* ** `googleSearch: {}` **: この1行だけで、LLM に Google 検索からのライブ情報へのアクセス権を与え、本来なら知り得ない現在の上映時間に関する質問に答えられるようにします。
+
+## **5. 映画館検索のプロンプトとインターフェースの構築**
+
+検索対応モデルの構成が完了したので、それと対話するためのフロントエンドが必要です。このステップでは、この目的のために事前作成された `FindTheatresPage` コンポーネントを使用します。
+
+**目標:** ユーザーの場所と日付を取得し、構造化されたプロンプトを Gemini に送信し、Google 検索経由で見つかった上映時間をレンダリングする React インターフェースを使用します。
+
+`App.tsx (app/src/App.tsx)` で、以下の2行のコメントアウトを解除して FindTheatres.tsx ページを追加し、ルート App.tsx コンポーネントでページへのルートを有効にします。
+
+```javascript
+import FindTheatresPage from "./pages/FindTheatres";
+//...<Route path="/findtheatres" element={<FindTheatresPage />} />
+```
+
+FindTheatres.tsx コンポーネント内の主要なロジックをいくつか分解してみましょう。
+
+### **1. セットアップと状態管理**
+
+ユーザーの入力を管理するために標準的な React フックを使用します。
+
+* ** `useSearchParams` **: 前の画面から渡された映画のタイトルやタグを取得します（例：ユーザーが特定の映画ポスターで「上映時間を探す」をクリックした場合など）。
+* ** `handleUseMyLocation` **: ユーザーが都市名を入力するよりも現在地を使用したい場合に、ブラウザ固有の Geolocation API を使用して正確な座標（`緯度、経度`）を取得します。
+
+### **2. プロンプトエンジニアリング戦略**
+
+このコンポーネントの中核は `handleSearch` 関数です。`prompt` をどのように構築しているかよく見てください。
+
+```json
+Context: User wants to see the movie matching "${tags || movieTitle}" in a theatre.
+Location: ${location}
+Date: ${date}
+
+       Task:
+       1. Find 2-3 movies similar to "${tags || movieTitle}" currently playing in this city.
+       2. Return strict JSON format.
+
+       JSON Schema:
+       {
+           "movies": [
+               {
+                   "title": "Movie Title",
+                   "description": "Movie description",
+                   "isTargetMovie": true,
+                   "theatres": [
+                       { "name": "Cinema Name", "showtimes": ["7:00 PM", "9:30 PM"] }
+                   ]
+               }
+           ]
+       }
+```
+
+**なぜこれを行うのでしょうか？**
+
+* **コンテキストの注入:** `location` と `date` を明示的にプロンプトに送り込むことで、Google 検索ツールが「どこで」「いつ」検索すべきかを正確に把握できるようにします。
+* **構造化出力 (JSON モード):** LLM は通常、会話形式のテキストを出力します。しかし、私たちの UI には映画館のリストをきれいに表示するために配列やオブジェクトが必要です。「厳密な JSON 形式」を明示的に要求し、**JSON スキーマ** を提供することで、モデルに検索結果を機械可読なコードにフォーマットさせます。
+
+### **3. 実行と解析**
+
+プロンプト内の JSON スキーマに基づいてモデルのレスポンスをマッピングするために、以下の2つのインターフェースを用意しています。
+
+```javascript
+interface Theatre {
+name: string;
+showtimes: string[];
+}
+
+interface MovieResult {
+title: string;
+isTargetMovie: boolean;
+description: string;
+theatres: Theatre[];
+}
+```
+
+handleSearch 内で、呼び出しを実行します。
+
+**モデルの呼び出し:** `model.generateContent(...)` が AI を起動します。AI は「現在の上映時間」のリクエストを確認し、外部データが必要であることを認識し、Google 検索を実行して結果を統合します。
+
+**クリーニングと解析:**
+```javascript
+const cleanJson = text.replace(/json|/g, "").trim();
+const data = JSON.parse(cleanJson);
+```
+
+`JSON.parse` がクラッシュしないように、AI が追加する可能性のあるマークダウンコードブロック（```json など）を取り除きます。
+
+**グラウンディングメタデータ:** `response.candidates?.[0]?.groundingMetadata` を具体的に保存します。これには「証拠」、つまりデータが見つかった実際の映画館ウェブサイトへのリンクが含まれています。
+
+### **4. UI レンダリング**
+
+return ステートメントは、Tailwind CSS を使用して視覚的な表示を処理します。
+
+* **入力セクション:** ユーザーが日付や場所を簡単に変更できる分割レイアウト。
+* **結果ループ:** `movies` 配列をループして表示します。
+
+## **6. 動作確認**
+
+アプリケーションを起動します: `npm run dev`
+
+映画をクリックし、「Find Theatres」ボタンを押します
+
+日付と時間を入力し、「Find Showtimes」ボタンをクリックします
+
+Gemini が、設定した場所で上映されている類似映画を返してくるのを待ちましょう！
